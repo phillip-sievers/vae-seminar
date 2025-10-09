@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from outputs import VAEOutput
+from src.models.outputs import VAEOutput
 
 
 class VAE(nn.Module):
@@ -8,7 +8,7 @@ class VAE(nn.Module):
     Variational autoencoder according to Kingma et. al. experiments
     """
 
-    def __init__(self):
+    def __init__(self, latent_dim=64):
         super(VAE, self).__init__()
 
         # F.1 simple encoder
@@ -25,10 +25,11 @@ class VAE(nn.Module):
             nn.Conv2d(64, 2 * 256, 7, 1, 0),
             nn.GLU(dim=1),
             nn.Flatten(),
-            nn.Linear(256, 2 * 64),  # double for mean and var
+            nn.Linear(256, 2 * latent_dim),  # double for mean and var
         )
         self.softplus = nn.Softplus()
 
+        self.decoder_linear = nn.Linear(latent_dim, 64)
         # F.2 simple decoder
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(64, 2 * 64, 7, 1, 0),
@@ -41,7 +42,7 @@ class VAE(nn.Module):
             nn.GLU(dim=1),
             nn.ConvTranspose2d(32, 2 * 32, 5, 2, 2, output_padding=1),
             nn.GLU(dim=1),
-            nn.ConvTranspose2d(32, 2 * 32, 4, 1, 1),
+            nn.ConvTranspose2d(32, 2 * 32, 4, 1, 2, output_padding=1),
             nn.GLU(dim=1),
             nn.Conv2d(32, 2 * 1, 5, 1, 2),
             nn.GLU(dim=1),
@@ -74,30 +75,21 @@ class VAE(nn.Module):
         """
         Decode a latent space sample z
         """
+        z = self.decoder_linear(z).view(-1, 64, 1, 1)
         return self.decoder(z)
 
     def forward(self, x, track_loss=True):
         """
         Performs a forward pass of the VAE.
-
-        Args:
-            x (torch.Tensor): Input data.
-
-        Returns:
-            VAEOutput: VAE output dataclass.
         """
         distribution = self.encode(x)
         z = self.reparameterize(distribution)
         reconstructed_x = self.decode(z)
 
-        # compute loss
-        recon_loss = (
-            nn.functional.binary_cross_entropy(
-                reconstructed_x, x + 0.5, reduction="none"
-            )
-            .sum(-1)
-            .mean()
-        )
+        recon_loss = nn.functional.binary_cross_entropy(
+            reconstructed_x, x, reduction="sum"
+        ) / x.size(0)
+
         std_normal = torch.distributions.MultivariateNormal(
             torch.zeros_like(z, device=z.device),
             scale_tril=torch.eye(z.shape[-1], device=z.device)
