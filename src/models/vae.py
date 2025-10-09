@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from outputs import VAEOutput
 
 
 class VAE(nn.Module):
@@ -90,7 +91,7 @@ class VAE(nn.Module):
         reconstructed_x = self.decode(z)
 
         # compute loss
-        loss_recon = (
+        recon_loss = (
             nn.functional.binary_cross_entropy(
                 reconstructed_x, x + 0.5, reduction="none"
             )
@@ -103,9 +104,15 @@ class VAE(nn.Module):
             .unsqueeze(0)
             .expand(z.shape[0], -1, -1),
         )
-        loss_kl = torch.distributions.kl.kl_divergence(distribution, std_normal).mean()
+        kl_loss = torch.distributions.kl.kl_divergence(distribution, std_normal).mean()
 
-        loss = loss_recon + loss_kl
+        loss = recon_loss + kl_loss
 
-        # TODO return VAEOutput class\
-        return None
+        return VAEOutput(
+            z_distribution=distribution,
+            sampled_z=z,
+            recon_x=reconstructed_x,
+            loss=loss,
+            recon_loss=recon_loss,
+            kl_loss=kl_loss,
+        )
