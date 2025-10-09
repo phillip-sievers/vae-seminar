@@ -1,3 +1,8 @@
+# Own additional things as needed
+
+# Data retrieval shall be dynamic
+.data
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
