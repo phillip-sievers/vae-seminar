@@ -44,7 +44,7 @@ class VAE(nn.Module):
             nn.GLU(dim=1),
             nn.ConvTranspose2d(32, 2 * 32, 5, 2, 2, output_padding=1),
             nn.GLU(dim=1),
-            nn.ConvTranspose2d(32, 2 * 32, 4, 1, 2, output_padding=1),
+            nn.ConvTranspose2d(32, 2 * 32, 5, 1, 2),
             nn.GLU(dim=1),
             nn.Conv2d(32, 2 * 1, 5, 1, 2),
             nn.GLU(dim=1),
@@ -103,6 +103,8 @@ class VAE(nn.Module):
         if track_loss:
             beta = self.beta
             loss = recon_loss + beta * kl_loss
+        else:
+            loss = None
 
         return VAEOutput(
             z_distribution=distribution,
