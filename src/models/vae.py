@@ -8,8 +8,10 @@ class VAE(nn.Module):
     Variational autoencoder according to Kingma et. al. experiments
     """
 
-    def __init__(self, latent_dim=64):
+    def __init__(self, latent_dim=64, beta=1.0):
         super(VAE, self).__init__()
+        self.beta = beta
+        self.latent_dim = latent_dim
 
         # F.1 simple encoder
         self.encoder = nn.Sequential(
@@ -98,7 +100,9 @@ class VAE(nn.Module):
         )
         kl_loss = torch.distributions.kl.kl_divergence(distribution, std_normal).mean()
 
-        loss = recon_loss + kl_loss
+        if track_loss:
+            beta = self.beta
+            loss = recon_loss + beta * kl_loss
 
         return VAEOutput(
             z_distribution=distribution,
