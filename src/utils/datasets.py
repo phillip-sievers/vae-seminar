@@ -86,12 +86,24 @@ def get_bin_mnist_loaders(
         shuffle=True,
         num_workers=num_workers,
         drop_last=True,
+        pin_memory=True,
+        pin_memory_device=device,
     )
     val_loader = DataLoader(
-        val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers
+        val_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+        pin_memory_device=device,
     )
     test_loader = DataLoader(
-        test_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers
+        test_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+        pin_memory_device=device,
     )
 
     return train_loader, val_loader, test_loader
