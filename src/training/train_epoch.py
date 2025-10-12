@@ -24,8 +24,9 @@ def train_epoch(model, dataloader, optimizer, scaler=None, log_interval=50):
         optimizer.zero_grad(set_to_none=True)
 
         if scaler is not None:
-            with torch.cuda.amp.autocast("cuda", enabled=True):
-                out = model(x)
+            # doesnt work on colab?
+            # with torch.cuda.amp.autocast(enabled=True):
+            out = model(x)
             scaler.scale(out.loss).backward()
             scaler.step(optimizer)
             scaler.update()
