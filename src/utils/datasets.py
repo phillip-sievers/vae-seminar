@@ -115,9 +115,6 @@ def get_bin_mnist_loaders(
 # to be cont. for visualizer and stuff
 
 
-# ============================================================
-# Visualization
-# ============================================================
 def visualize_batch(
     dataloader: DataLoader, num_samples: int = 8, title: str = "Data Samples"
 ):
@@ -148,9 +145,6 @@ def visualize_batch(
     plt.show()
 
 
-# ============================================================
-# Statistics computation
-# ============================================================
 def compute_dataset_stats(dataloader: DataLoader) -> Dict[str, torch.Tensor]:
     """
     Compute mean and std statistics for a dataset.
