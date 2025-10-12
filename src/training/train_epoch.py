@@ -34,13 +34,11 @@ def train_epoch(model, dataloader, optimizer, scaler=None, log_interval=50):
             out.loss.backward()
             optimizer.step()
 
-        # Accumulate as Python floats (minimal overhead)
         total_loss += out.loss.item()
         total_kl += out.kl_loss.item()
         total_recon += out.recon_loss.item()
         num_batches += 1
 
-        # Optional: log periodically
         if log_interval > 0 and batch_idx % log_interval == 0:
             avg_loss = total_loss / num_batches
             print(f"Batch {batch_idx}/{len(dataloader)}: Loss={avg_loss:.4f}")
