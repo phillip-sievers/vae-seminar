@@ -9,15 +9,18 @@ import torch
 from tqdm import tqdm
 
 
-def train_epoch(model, dataloader, optimizer, device):
+def train_epoch(model, dataloader, optimizer, scaler=None, log_interval=50):
+    """
+    Optimized training epoch
+
+    Args:
+        log_interval: Print metrics every N batches (0 to disable logging)
+    """
     model.train()
     total_loss, total_kl, total_recon = 0.0, 0.0, 0.0
-
-    scaler = torch.amp.GradScaler("cuda") if device == "cuda" else None
     num_batches = 0
 
-    for x, _ in tqdm(dataloader, leave=False, desc="Training"):
-        # x = x.to(device, non_blocking=True)
+    for batch_idx, (x, _) in enumerate(dataloader):
         optimizer.zero_grad(set_to_none=True)
 
         if scaler is not None:
@@ -31,16 +34,21 @@ def train_epoch(model, dataloader, optimizer, device):
             out.loss.backward()
             optimizer.step()
 
-        total_loss += out.loss.detach()
-        total_kl += out.kl_loss.detach()
-        total_recon += out.recon_loss.detach()
+        # Accumulate as Python floats (minimal overhead)
+        total_loss += out.loss.item()
+        total_kl += out.kl_loss.item()
+        total_recon += out.recon_loss.item()
         num_batches += 1
 
-    n = len(dataloader)
+        # Optional: log periodically
+        if log_interval > 0 and batch_idx % log_interval == 0:
+            avg_loss = total_loss / num_batches
+            print(f"Batch {batch_idx}/{len(dataloader)}: Loss={avg_loss:.4f}")
+
     return {
-        "loss": total_loss / n,
-        "kl": total_kl / n,
-        "recon": total_recon / n,
+        "loss": total_loss / num_batches,
+        "kl": total_kl / num_batches,
+        "recon": total_recon / num_batches,
     }
 
 

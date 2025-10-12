@@ -20,7 +20,7 @@ class BinaryMNIST(Dataset):
     Static binary MNIST according to Paper
     """
 
-    def __init__(self, data: str = "/src/data/", split="train", device="cpu"):
+    def __init__(self, data: str = "/src/data/", split="train", device="cuda"):
         assert split in {"train", "valid", "test"}
         base = get_repo_root()
         self.root = os.path.join(base, data)
@@ -64,18 +64,24 @@ class BinaryMNIST(Dataset):
         return x, 0
 
 
+def get_gpu_data(data_dir: str = "./src/data/"):
+    """
+    Return raw GPU tensors instead of DataLoaders
+    """
+
+    train_ds = BinaryMNIST(data_dir, "train", device="cuda")
+    val_ds = BinaryMNIST(data_dir, "valid", device="cuda")
+    test_ds = BinaryMNIST(data_dir, "test", device="cuda")
+
+    return {"train": train_ds.data, "val": val_ds.data, "test": test_ds.data}
+
+
 def get_bin_mnist_loaders(
     batch_size: int = 128,
     data_dir: str = "./src/data/",
-    num_workers: int = 2,
-    device="cpu",
+    device="cuda",
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
-    """
-    Get MNIST train, validation, and test dataloaders.x
-
-    Returns:
-        Tuple of (train_loader, val_loader, test_loader)
-    """
+    """Get MNIST loaders with GPU-resident data"""
     train_ds = BinaryMNIST(data_dir, "train", device=device)
     val_ds = BinaryMNIST(data_dir, "valid", device=device)
     test_ds = BinaryMNIST(data_dir, "test", device=device)
@@ -84,26 +90,23 @@ def get_bin_mnist_loaders(
         train_ds,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=num_workers,
+        num_workers=0,
         drop_last=True,
-        pin_memory=True,
-        pin_memory_device=device,
+        pin_memory=False,
     )
     val_loader = DataLoader(
         val_ds,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True,
-        pin_memory_device=device,
+        num_workers=0,
+        pin_memory=False,
     )
     test_loader = DataLoader(
         test_ds,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=num_workers,
-        pin_memory=True,
-        pin_memory_device=device,
+        num_workers=0,
+        pin_memory=False,
     )
 
     return train_loader, val_loader, test_loader
