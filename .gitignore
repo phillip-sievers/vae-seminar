@@ -1,7 +1,7 @@
 # Own additional things as needed
 
 # Data retrieval shall be dynamic
-.data
+.amat
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
