@@ -20,7 +20,7 @@ class BinaryMNIST(Dataset):
     Static binary MNIST according to Paper
     """
 
-    def __init__(self, data: str = "/src/data/", split="train"):
+    def __init__(self, data: str = "/src/data/", split="train", device="cpu"):
         assert split in {"train", "valid", "test"}
         base = get_repo_root()
         self.root = os.path.join(base, data)
@@ -31,7 +31,9 @@ class BinaryMNIST(Dataset):
 
         file_path = os.path.join(self.root, f"binarized_mnist_{split}.amat")
         data = np.loadtxt(file_path)
-        self.data = torch.tensor(data, dtype=torch.float32).view(-1, 1, 28, 28)
+        self.data = torch.tensor(data, dtype=torch.float32, device=device).view(
+            -1, 1, 28, 28
+        )
 
     def _download(self, split="train"):
         """
@@ -66,6 +68,7 @@ def get_bin_mnist_loaders(
     batch_size: int = 128,
     data_dir: str = "./src/data/",
     num_workers: int = 2,
+    device="cpu",
 ) -> Tuple[DataLoader, DataLoader, DataLoader]:
     """
     Get MNIST train, validation, and test dataloaders.x
@@ -73,9 +76,9 @@ def get_bin_mnist_loaders(
     Returns:
         Tuple of (train_loader, val_loader, test_loader)
     """
-    train_ds = BinaryMNIST(data_dir, "train")
-    val_ds = BinaryMNIST(data_dir, "valid")
-    test_ds = BinaryMNIST(data_dir, "test")
+    train_ds = BinaryMNIST(data_dir, "train", device=device)
+    val_ds = BinaryMNIST(data_dir, "valid", device=device)
+    test_ds = BinaryMNIST(data_dir, "test", device=device)
 
     train_loader = DataLoader(
         train_ds,
