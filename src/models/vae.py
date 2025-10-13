@@ -30,6 +30,8 @@ class VAE(nn.Module):
         )
         self.softplus = nn.Softplus()
 
+        self.decoder_linear = nn.Linear(latent_dim, 64)
+
         # F.2 simple decoder
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(64, 2 * 64, 7, 1, 0),
@@ -80,7 +82,9 @@ class VAE(nn.Module):
         Returns:
             Generated image (batch_size, 1, 28, 28)
         """
-        return self.decoder(z)
+        h = self.decoder_linear(z)
+        h = h.view(h.size(0), 64, 1, 1)
+        return self.decoder(h)
 
     def forward(self, x, track_loss=True):
         """
