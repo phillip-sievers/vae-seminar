@@ -9,27 +9,42 @@ class VAE(nn.Module):
     Variational autoencoder according to Kingma et. al. experiments
     """
 
-    def __init__(self, latent_dim=64, beta=1.0):
+    def __init__(self, latent_dim=64, beta=1.0, force_collapse=False):
         super(VAE, self).__init__()
         self.beta = beta
         self.latent_dim = latent_dim
+        self.force_collapse = force_collapse
 
         # F.1 simple encoder
-        self.encoder = nn.Sequential(
-            # Normalize to [-1, 1] first
-            nn.Conv2d(1, 2 * 32, 5, 1, 2),
-            nn.GLU(dim=1),
-            nn.Conv2d(32, 2 * 32, 5, 2, 2),
-            nn.GLU(dim=1),
-            nn.Conv2d(32, 2 * 64, 5, 1, 2),
-            nn.GLU(dim=1),
-            nn.Conv2d(64, 2 * 64, 5, 2, 2),
-            nn.GLU(dim=1),
-            nn.Conv2d(64, 2 * 256, 7, 1, 0),
-            nn.GLU(dim=1),
-            nn.Flatten(),
-            nn.Linear(256, 2 * latent_dim),  # double for mean and var
-        )
+        if force_collapse:
+            # Weaker encoder to make posterior collapse more likely
+            self.encoder = nn.Sequential(
+                nn.Conv2d(1, 16, 5, 2, 2),  # Reduced capacity
+                nn.ReLU(),  # Use ReLU instead of GLU
+                nn.Conv2d(16, 32, 5, 2, 2),
+                nn.ReLU(),
+                nn.Conv2d(32, 64, 7, 1, 0),
+                nn.ReLU(),
+                nn.Flatten(),
+                nn.Linear(64, 2 * latent_dim),  # Simple linear layer
+            )
+        else:
+            # Standard encoder
+            self.encoder = nn.Sequential(
+                # Normalize to [-1, 1] first
+                nn.Conv2d(1, 2 * 32, 5, 1, 2),
+                nn.GLU(dim=1),
+                nn.Conv2d(32, 2 * 32, 5, 2, 2),
+                nn.GLU(dim=1),
+                nn.Conv2d(32, 2 * 64, 5, 1, 2),
+                nn.GLU(dim=1),
+                nn.Conv2d(64, 2 * 64, 5, 2, 2),
+                nn.GLU(dim=1),
+                nn.Conv2d(64, 2 * 256, 7, 1, 0),
+                nn.GLU(dim=1),
+                nn.Flatten(),
+                nn.Linear(256, 2 * latent_dim),  # double for mean and var
+            )
         self.softplus = nn.Softplus()
 
         # Paper decoder handles latent-to-image mapping internally
@@ -110,8 +125,14 @@ class VAE(nn.Module):
         kl_loss = torch.distributions.kl.kl_divergence(distribution, std_normal).mean()
 
         if track_loss:
-            beta = self.beta
-            loss = recon_loss + beta * kl_loss
+            # Apply different beta strategies for collapse demonstration
+            if self.force_collapse:
+                # High beta or annealing strategy that causes collapse
+                effective_beta = self.beta * 10.0  # Much higher beta
+            else:
+                effective_beta = self.beta
+
+            loss = recon_loss + effective_beta * kl_loss
         else:
             loss = None
 
