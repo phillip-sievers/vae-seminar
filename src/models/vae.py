@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from src.models.outputs import VAEOutput
-from src.models.auto_decoder_paper import AutoDecoder, CNNPPDecoder
 
 
 class VAE(nn.Module):
