@@ -25,7 +25,8 @@ from .plotting import (
     plot_latent_space_2d,
     setup_plotting_style,
 )
-from .seed import set_seed, get_random_state, set_random_state
+
+# from .seed import set_seed, get_random_state, set_random_state  # Module doesn't exist yet
 
 __all__ = [
     # Dataset utilities
@@ -45,8 +46,8 @@ __all__ = [
     "plot_training_curves",
     "plot_latent_space_2d",
     "setup_plotting_style",
-    # Seed utilities
-    "set_seed",
-    "get_random_state",
-    "set_random_state",
+    # Seed utilities - commented out since module doesn't exist yet
+    # "set_seed",
+    # "get_random_state",
+    # "set_random_state",
 ]

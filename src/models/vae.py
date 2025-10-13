@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from src.models.outputs import VAEOutput
+from src.models.pixelcnnpp import PixelCNN
 
 
 class VAE(nn.Module):
@@ -31,24 +32,33 @@ class VAE(nn.Module):
         )
         self.softplus = nn.Softplus()
 
-        self.decoder_linear = nn.Linear(latent_dim, 64)
+        # self.decoder_linear = nn.Linear(latent_dim, 64)
+        self.decoder_linear = nn.Linear(latent_dim, 28 * 28)
         # F.2 simple decoder
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(64, 2 * 64, 7, 1, 0),
-            nn.GLU(dim=1),
-            nn.ConvTranspose2d(64, 2 * 64, 5, 1, 2),
-            nn.GLU(dim=1),
-            nn.ConvTranspose2d(64, 2 * 64, 5, 2, 2, output_padding=1),
-            nn.GLU(dim=1),
-            nn.ConvTranspose2d(64, 2 * 32, 5, 1, 2),
-            nn.GLU(dim=1),
-            nn.ConvTranspose2d(32, 2 * 32, 5, 2, 2, output_padding=1),
-            nn.GLU(dim=1),
-            nn.ConvTranspose2d(32, 2 * 32, 5, 1, 2),
-            nn.GLU(dim=1),
-            nn.Conv2d(32, 2 * 1, 5, 1, 2),
-            nn.GLU(dim=1),
-            nn.Sigmoid(),
+        # self.decoder = nn.Sequential(
+        #     nn.ConvTranspose2d(64, 2 * 64, 7, 1, 0),
+        #     nn.GLU(dim=1),
+        #     nn.ConvTranspose2d(64, 2 * 64, 5, 1, 2),
+        #     nn.GLU(dim=1),
+        #     nn.ConvTranspose2d(64, 2 * 64, 5, 2, 2, output_padding=1),
+        #     nn.GLU(dim=1),
+        #     nn.ConvTranspose2d(64, 2 * 32, 5, 1, 2),
+        #     nn.GLU(dim=1),
+        #     nn.ConvTranspose2d(32, 2 * 32, 5, 2, 2, output_padding=1),
+        #     nn.GLU(dim=1),
+        #     nn.ConvTranspose2d(32, 2 * 32, 5, 1, 2),
+        #     nn.GLU(dim=1),
+        #     nn.Conv2d(32, 2 * 1, 5, 1, 2),
+        #     nn.GLU(dim=1),
+        #     nn.Sigmoid(),
+        # )
+        # Using a strong decoder to see clear problems:
+        self.decoder = PixelCNN(
+            nr_resnet=3,  # Number of residual blocks (paper uses 3-6)
+            nr_filters=64,  # Number of filters (paper uses 64-100)
+            input_channels=1,  # MNIST is grayscale (1 channel)
+            nr_logistic_mix=5,  # Number of logistic mixture components
+            binary_output=True,  # experiment specific
         )
 
     def encode(self, x):
@@ -77,7 +87,11 @@ class VAE(nn.Module):
         """
         Decode a latent space sample z
         """
-        z = self.decoder_linear(z).view(-1, 64, 1, 1)
+        # Map latent code to image space (28x28 for MNIST)
+        z = self.decoder_linear(z).view(-1, 1, 28, 28)
+        # Apply sigmoid to get pixel probabilities in [0, 1]
+        z = torch.sigmoid(z)
+        # PixelCNN takes image data and outputs pixel probabilities (binary mode)
         return self.decoder(z)
 
     def forward(self, x, track_loss=True):
