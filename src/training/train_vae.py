@@ -30,7 +30,10 @@ def train_beta_vae(
     model = VAE(latent_dim=latent_dim, beta=beta).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     if device == "cuda":
-        scaler = torch.cuda.amp.GradScaler("cuda")
+        # have to use depr. on colab
+        scaler = torch.cuda.amp.GradScaler()
+    else:
+        sclaer = None
 
     best_test_loss = float("inf")
     best_D = 0
