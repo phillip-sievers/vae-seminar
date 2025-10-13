@@ -2,7 +2,9 @@ import torch
 
 
 def optimize_for_memory():
-    """Apply memory optimizations"""
+    """
+    Apply memory optimizations
+    """
     torch.cuda.empty_cache()
 
     if torch.cuda.is_available():
@@ -18,7 +20,7 @@ def optimize_for_memory():
 
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
 
-    print("🚀 Memory optimizations applied!")
+    print("memory optimizations applied")
 
     if torch.cuda.is_available():
         print(

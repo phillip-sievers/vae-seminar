@@ -21,17 +21,17 @@ def train_epoch(model, dataloader, optimizer, scaler=None, log_interval=50):
     num_batches = 0
 
     for batch_idx, (x, _) in enumerate(dataloader):
-        optimizer.zero_grad(set_to_none=True)
+        optimizer.zero_grad()
 
         if scaler is not None:
-            # doesnt work on colab?
+            # l.28 doesnt work on colab?
             # with torch.cuda.amp.autocast(enabled=True):
             out = model(x)
             scaler.scale(out.loss).backward()
             scaler.step(optimizer)
             scaler.update()
         else:
-            out = model(x)
+            out = model(x, track_loss=True)
             out.loss.backward()
             optimizer.step()
 
@@ -57,7 +57,7 @@ def evaluate_epoch(model, dataloader, device):
 
     for x, _ in tqdm(dataloader, leave=False):
         x = x.to(device)
-        out = model(x)
+        out = model(x, track_loss=True)
 
         total_loss += out.loss.item()
         total_kl += out.kl_loss.item()
