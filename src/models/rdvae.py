@@ -9,8 +9,16 @@ class RDVAE(VAE):
     Rate-Distortion VAE with lambda scheduling for controlling the rate-distortion trade-off
     """
 
-    def __init__(self, latent_dim=64, R_target=2.0, gamma=100.0, abs_loss=True):
-        super().__init__(latent_dim)
+    def __init__(
+        self,
+        latent_dim=64,
+        R_target=6.0,
+        gamma=100.0,
+        abs_loss=True,
+        vae_beta=1.0,
+        force_collapse=False,
+    ):
+        super().__init__(latent_dim, beta=vae_beta, force_collapse=force_collapse)
         self.R_target = R_target
         self.gamma = gamma
         self.abs_loss = abs_loss

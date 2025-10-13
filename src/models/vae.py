@@ -66,7 +66,7 @@ class VAE(nn.Module):
         #     nn.GLU(dim=1),
         #     nn.Sigmoid(),
         # )
-        # Using autodecoder (generates from latent only):
+        # Using autodecoder
         self.decoder = AutoDecoder(latent_dim=latent_dim)
 
     def encode(self, x):
