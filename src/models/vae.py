@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from src.models.outputs import VAEOutput
-from src.models.paper_decoder import CNNPPDecoder
+from src.models.auto_decoder_paper import AutoDecoder, CNNPPDecoder
 
 
 class VAE(nn.Module):
@@ -51,8 +51,8 @@ class VAE(nn.Module):
         #     nn.GLU(dim=1),
         #     nn.Sigmoid(),
         # )
-        # Using paper decoder architecture:
-        self.decoder = CNNPPDecoder(latent_dim=latent_dim)
+        # Using autodecoder (generates from latent only):
+        self.decoder = AutoDecoder(latent_dim=latent_dim)
 
     def encode(self, x):
         """
@@ -76,16 +76,17 @@ class VAE(nn.Module):
         """
         return distribution.rsample()
 
-    def decode(self, z, target_image):
+    def decode(self, z):
         """
-        Decode a latent space sample z using the paper's decoder architecture
+        Decode a latent space sample z using autodecoder
 
         Args:
             z: Latent code (batch_size, latent_dim)
-            target_image: Target image (batch_size, 1, 28, 28)
+        Returns:
+            Generated image (batch_size, 1, 28, 28)
         """
-        # Paper decoder takes both latent code and target image
-        return self.decoder(z, target_image)
+        # Autodecoder generates images from latent codes only
+        return self.decoder(z)
 
     def forward(self, x, track_loss=True):
         """
@@ -93,8 +94,8 @@ class VAE(nn.Module):
         """
         distribution = self.encode(x)
         z = self.reparameterize(distribution)
-        # Paper decoder requires both latent code and target image
-        reconstructed_x = self.decode(z, x)
+        # Autodecoder only needs latent code
+        reconstructed_x = self.decode(z)
 
         recon_loss = nn.functional.binary_cross_entropy(
             reconstructed_x, x, reduction="sum"

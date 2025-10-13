@@ -50,6 +50,78 @@ class ResNetBlock(nn.Module):
         return out + residual
 
 
+class AutoDecoder(nn.Module):
+    """
+    gen decoder
+    Architecture similar to paper but takes only latent codes to avoid overfit
+    """
+
+    def __init__(self, latent_dim=64):
+        super().__init__()
+
+        # Start with dense layer: latent_dim → 64 * 7 * 7
+        self.latent_to_features = LinearGatedLinear(latent_dim, 64 * 7 * 7)
+
+        # Block 1: (7×7) - 2 ResNet layers (bottleneck)
+        self.block1_res1 = ResNetBlock(64)
+        self.block1_res2 = ResNetBlock(64)
+
+        # Upsample: (7×7) → (14×14)
+        self.upsample1 = nn.ConvTranspose2d(
+            64, 64, kernel_size=3, stride=2, padding=1, output_padding=1
+        )
+
+        # Block 2: (14×14) - 2 ResNet layers
+        self.block2_res1 = ResNetBlock(64)
+        self.block2_res2 = ResNetBlock(64)
+
+        # Upsample: (14×14) → (28×28)
+        self.upsample2 = nn.ConvTranspose2d(
+            64, 64, kernel_size=3, stride=2, padding=1, output_padding=1
+        )
+
+        # Block 3: (28×28) - 2 ResNet layers
+        self.block3_res1 = ResNetBlock(64)
+        self.block3_res2 = ResNetBlock(64)
+
+        # Additional refinement blocks at (28×28) for higher quality
+        self.block4_res1 = ResNetBlock(64)
+        self.block4_res2 = ResNetBlock(64)
+
+        # Final 1×1 conv: (28×28×64) → (28×28×1)
+        self.final_conv = nn.Conv2d(64, 1, kernel_size=1)
+
+    def forward(self, z):
+        """
+        Args:
+            z: Latent code (batch_size, latent_dim)
+        Returns:
+            Generated image (batch_size, 1, 28, 28) with sigmoid activation
+        """
+        x = self.latent_to_features(z)
+        x = x.view(-1, 64, 7, 7)
+
+        x = self.block1_res1(x)
+        x = self.block1_res2(x)
+
+        x = self.upsample1(x)
+
+        x = self.block2_res1(x)
+        x = self.block2_res2(x)
+
+        x = self.upsample2(x)
+
+        x = self.block3_res1(x)
+        x = self.block3_res2(x)
+
+        x = self.block4_res1(x)
+        x = self.block4_res2(x)
+
+        logits = self.final_conv(x)
+
+        return torch.sigmoid(logits)
+
+
 class CNNPPDecoder(nn.Module):
     """
     According to paper
