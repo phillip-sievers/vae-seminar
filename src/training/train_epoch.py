@@ -12,6 +12,7 @@ from tqdm import tqdm
 def train_epoch(model, dataloader, optimizer, scaler=None, log_interval=50):
     """
     Optimized training epoch
+    assuming everything is on gpu by now
 
     Args:
         log_interval: Print metrics every N batches (0 to disable logging)

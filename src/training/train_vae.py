@@ -29,6 +29,8 @@ def train_beta_vae(
 
     model = VAE(latent_dim=latent_dim, beta=beta).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    if device == "cuda":
+        scaler = torch.cuda.amp.GradScaler("cuda")
 
     best_test_loss = float("inf")
     best_D = 0
@@ -36,7 +38,7 @@ def train_beta_vae(
 
     for epoch in range(epochs):
         train_loss, train_D, train_R = train_epoch(
-            model, train_loader, optimizer, device
+            model, train_loader, optimizer, scaler
         )
         stats = evaluate_epoch(model, test_loader, device)
         test_loss = stats["loss"]
