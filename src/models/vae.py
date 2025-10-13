@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from src.models.outputs import VAEOutput
-from src.models.pixelcnnpp import PixelCNN
+from src.models.paper_decoder import CNNPPDecoder
 
 
 class VAE(nn.Module):
@@ -32,9 +32,8 @@ class VAE(nn.Module):
         )
         self.softplus = nn.Softplus()
 
-        # self.decoder_linear = nn.Linear(latent_dim, 64)
-        self.decoder_linear = nn.Linear(latent_dim, 28 * 28)
-        # F.2 simple decoder
+        # Paper decoder handles latent-to-image mapping internally
+        # F.2 simple decoder (commented out)
         # self.decoder = nn.Sequential(
         #     nn.ConvTranspose2d(64, 2 * 64, 7, 1, 0),
         #     nn.GLU(dim=1),
@@ -52,14 +51,8 @@ class VAE(nn.Module):
         #     nn.GLU(dim=1),
         #     nn.Sigmoid(),
         # )
-        # Using a strong decoder to see clear problems:
-        self.decoder = PixelCNN(
-            nr_resnet=3,  # Number of residual blocks (paper uses 3-6)
-            nr_filters=64,  # Number of filters (paper uses 64-100)
-            input_channels=1,  # MNIST is grayscale (1 channel)
-            nr_logistic_mix=5,  # Number of logistic mixture components
-            binary_output=True,  # experiment specific
-        )
+        # Using paper decoder architecture:
+        self.decoder = CNNPPDecoder(latent_dim=latent_dim)
 
     def encode(self, x):
         """
@@ -83,16 +76,16 @@ class VAE(nn.Module):
         """
         return distribution.rsample()
 
-    def decode(self, z):
+    def decode(self, z, target_image):
         """
-        Decode a latent space sample z
+        Decode a latent space sample z using the paper's decoder architecture
+
+        Args:
+            z: Latent code (batch_size, latent_dim)
+            target_image: Target image (batch_size, 1, 28, 28)
         """
-        # Map latent code to image space (28x28 for MNIST)
-        z = self.decoder_linear(z).view(-1, 1, 28, 28)
-        # Apply sigmoid to get pixel probabilities in [0, 1]
-        z = torch.sigmoid(z)
-        # PixelCNN takes image data and outputs pixel probabilities (binary mode)
-        return self.decoder(z)
+        # Paper decoder takes both latent code and target image
+        return self.decoder(z, target_image)
 
     def forward(self, x, track_loss=True):
         """
@@ -100,7 +93,8 @@ class VAE(nn.Module):
         """
         distribution = self.encode(x)
         z = self.reparameterize(distribution)
-        reconstructed_x = self.decode(z)
+        # Paper decoder requires both latent code and target image
+        reconstructed_x = self.decode(z, x)
 
         recon_loss = nn.functional.binary_cross_entropy(
             reconstructed_x, x, reduction="sum"
