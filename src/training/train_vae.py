@@ -17,6 +17,8 @@ def train_beta_vae(
     device="cuda",
     data_path="",  # trust the loader lol
     batch_size=1024,
+    train_to_goal_elbo=False,
+    goal_elbo=-90,
 ):
     """
     Train a β-VAE with given beta value
@@ -39,6 +41,9 @@ def train_beta_vae(
     best_D = 0
     best_R = 0
 
+    if train_to_goal_elbo:
+        epochs = 1000
+
     for epoch in range(epochs):
         train_loss, train_D, train_R = train_epoch(
             model, train_loader, optimizer, scaler
@@ -51,6 +56,9 @@ def train_beta_vae(
             best_test_loss = test_loss
             best_D = test_D
             best_R = test_R
+
+        if train_to_goal_elbo and -(test_D + test_R) == goal_elbo:
+            break
 
         if (epoch + 1) % 5 == 0:
             print(
