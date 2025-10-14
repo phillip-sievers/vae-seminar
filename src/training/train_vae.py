@@ -33,7 +33,7 @@ def train_beta_vae(
         # have to use depr. on colab
         scaler = torch.cuda.amp.GradScaler()
     else:
-        sclaer = None
+        scaler = None
 
     best_test_loss = float("inf")
     best_D = 0
