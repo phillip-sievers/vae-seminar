@@ -1,9 +1,13 @@
-# Fixing a broken ELBO
+# VAE Rate-Distortion Experiments
 
 ## Goal
 
-As part of a seminar we will explore the VAE ELBO objective, we want to understand how the ELBO objective breaks and we will experiment with proposes solution and fixes, mainly "Fixing a broken ELBO" by Alemi et. al.
+We implemented a beta-VAE according to the paper "Fixing a broken ELBO"
 
-## Later TODO
+Due to hardware limitations we train and experiment in google colab.
 
-Ideally we end up with a toy sandbox that anyone can experiment with, although thats for the future
+Goal is the exploration of the RD-Curve
+
+## Setup
+
+will follow
