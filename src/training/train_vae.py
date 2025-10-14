@@ -42,7 +42,7 @@ def train_beta_vae(
     best_R = 0
 
     if train_to_goal_elbo:
-        epochs = 1000
+        epochs = 300
 
     for epoch in range(epochs):
         train_loss, train_D, train_R = train_epoch(
@@ -57,7 +57,7 @@ def train_beta_vae(
             best_D = test_D
             best_R = test_R
 
-        if train_to_goal_elbo and -(test_D + test_R) <= goal_elbo:
+        if train_to_goal_elbo and -(test_D + test_R) >= goal_elbo:
             break
 
         if (epoch + 1) % 5 == 0:
