@@ -14,7 +14,7 @@ dependencies:
   - beautifulsoup4=4.13.5=py312hca03da5_0
   - blas=1.0=openblas
   - bleach=6.2.0=py312hca03da5_0
-  - brotlicffi=1.0.9.2=py312h313beb8_1
+  - brotlicffi>=1.2.1.0
   - bzip2=1.0.8=h80987f9_6
   - ca-certificates=2025.9.9=hca03da5_0
   - cairo=1.18.4=h191e429_0
